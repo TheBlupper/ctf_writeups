@@ -1,8 +1,6 @@
 from scipy.io import wavfile
-import os 
-from matplotlib import pyplot as plt
+import os
 import numpy as np
-from bitstring import BitArray
 
 
 SONG_DIR = './tracks/'
