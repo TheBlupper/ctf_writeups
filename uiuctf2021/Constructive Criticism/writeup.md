@@ -50,9 +50,11 @@ plt.show()
 ```
 <img width="700" src="https://github.com/TheBlupper/ctf_writeups/raw/main/uiuctf2021/Constructive%20Criticism/digital.png">
 
-Bingo! A very clear digital pattern emerges!  At this point it becomes obvious why the challenge is named as it is. In a process called wave interference, the two channels are *constructively* as well as *destructively* interfering with each other at regular periods, creating a digital pattern. With this I mean that in the parts where the above graph is 0, all the highs of the pressure wave of channel #1 are cancelled out by the lows in channel #2, resulting in a net pressure change of 0. You can read more about wave interference [here](https://en.wikipedia.org/wiki/Wave_interference#:~:text=Constructive%20interference%20occurs%20when%20the,an%20odd%20multiple%20of%20%CF%80.&text=In%20other%20places%2C%20the%20waves,net%20displacement%20at%20these%20points.).
+Bingo! A very clear digital pattern emerges!  At this point it becomes obvious why the challenge is named as it is. In a process called wave interference, the two channels are *constructively* as well as *destructively* interfering with each other at regular periods, creating a digital pattern.
 
-At this point in time I tried interpreting the digital signals by hand and write them down. The bits in this file would be
+With this I mean that in the parts where the above graph is not 0 (which everything would be if the channels where equal) the two channels are opposites of each other, meaning the highs of channel #1 occur simultaneously as the lows of channel #2, so after subtracting one from the other it instead amplifies the signal. You can read more about wave interference [here](https://en.wikipedia.org/wiki/Wave_interference#:~:text=Constructive%20interference%20occurs%20when%20the,an%20odd%20multiple%20of%20%CF%80.&text=In%20other%20places%2C%20the%20waves,net%20displacement%20at%20these%20points.).
+
+At this point in time I tried interpreting the digital signals by hand and wrote them down. The bits in this song would be
 
 `01110101 01101001 01110101`
 
