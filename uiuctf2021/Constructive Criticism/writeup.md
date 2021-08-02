@@ -50,7 +50,7 @@ plt.show()
 ```
 <img width="700" src="https://github.com/TheBlupper/ctf_writeups/raw/main/uiuctf2021/Constructive%20Criticism/digital.png">
 
-Bingo! A very clear digital pattern emerges!  At this point it becomes obvious why the challenge is named as it is. The two channels are *constructively* as well as *destructively* interfering with each other at regular periods, creating a digital pattern. With this I mean that in the parts where the above graph is 0, all the highs of the pressure curve of channel #1 are cancelled out by the lows in channel #2 resulting in a net pressure change of 0.
+Bingo! A very clear digital pattern emerges!  At this point it becomes obvious why the challenge is named as it is. In a process called wave interference, the two channels are *constructively* as well as *destructively* interfering with each other at regular periods, creating a digital pattern. With this I mean that in the parts where the above graph is 0, all the highs of the pressure wave of channel #1 are cancelled out by the lows in channel #2, resulting in a net pressure change of 0. You can read more about wave interference [here](https://en.wikipedia.org/wiki/Wave_interference#:~:text=Constructive%20interference%20occurs%20when%20the,an%20odd%20multiple%20of%20%CF%80.&text=In%20other%20places%2C%20the%20waves,net%20displacement%20at%20these%20points.).
 
 At this point in time I tried interpreting the digital signals by hand and write them down. The bits in this file would be
 
@@ -99,10 +99,10 @@ def main():
         # Find the difference between the first two channels
         sub = c1 - c2
         
-        
         byte_num = 3
         while True:
             
+            # Samples per bit
             bit_size = sample_num // (byte_num * 8)
 
             text = ''
