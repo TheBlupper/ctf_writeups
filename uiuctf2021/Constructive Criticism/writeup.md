@@ -67,9 +67,7 @@ I'll first show you the script I came up with, and then I'll explain the reasons
 ```python
 from scipy.io import wavfile
 import os 
-from matplotlib import pyplot as plt
 import numpy as np
-from bitstring import BitArray
 
 
 SONG_DIR = './tracks/'
@@ -102,7 +100,7 @@ def main():
         byte_num = 3
         while True:
             
-            # Samples per bit
+            # Samples/bit
             bit_size = sample_num // (byte_num * 8)
 
             text = ''
