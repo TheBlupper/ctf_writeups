@@ -14,7 +14,7 @@ Note: Wrap the flag with idek{}
 ```
 
 ## Overview
-We are given nothing but this challenge description, containing the level ID for a Geometry Dash level. Geometry Dash is a 2D musical plattformer which I so happened to already have installed, so I took a quick look at the level. This was the title and description.
+We are given nothing but this challenge description, containing the level ID for a Geometry Dash level. Geometry Dash is a 2D musical platformer game which I so happened to already have installed, so I took a quick look at the level. This was the title and description.
 
 ![Description](description.png)
 
@@ -30,11 +30,11 @@ Lastly we hit a huge wall of spikes and we can get a glimpse of the flag we pres
 
 ![Fail](fail.gif)
 
-Since the description says we will get the flag by beating the level, we can assume that whetever input causes us to  not run into the spike wall will also display a readable flag at the end.
+Since the description says we will get the flag by beating the level, we can assume that whatever input causes us to  not run into the spike wall will also display a readable flag at the end.
 
 I knew for sure that I would not want to be manually inputting bits into this level, it simply moves too fast and there are too many bits.
 
-Using a discord bot I was able to get the passcode needed to copy the level (`671905`) and open it in the in-game editor. I also wanted to parse the level into Python so I looked for resources about how the level file format works but ended up needing to read the source code of some parsing libraries.
+Using a [discord bot](https://github.com/Alex1304/ultimategdbot) made for Geometry Dash communities (it was the first search result, okay?) I was able to get the passcode needed to copy the level (`671905`) and open it in the in-game editor. I also wanted to parse the level into Python so I looked for resources about how the level file format works but ended up needing to read the source code of some parsing libraries.
 
 All the levels of the current user are stored in one file: `CCLocalLevels.dat`. This is "encrypted" using a constant XOR key of 11 and packed using base64 and zlib compression. The result is an XML file which after a bit of traversing contains another base64-encoded-zlib-compressed string representing the whole level.
 ```python
@@ -78,7 +78,7 @@ Triggers are what give Geometry Dash levels their more advanced functionality, t
 `Move` triggers move things<sup>[citation needed]</sup>. They can be triggered by the player passing by their x-position, the player touching them directly or by other triggers. They target a certain `group` and move everything in that `group` by an X and Y offset. Any object can be assigned as a member of a `group` in the editor and are just named as numbers (`group 1`, `group 2` etc.).
 
 ### Toggle-triggers
-`Toggle` triggers can be triggered in the same way as `move` triggers and also target a `group`, but instead of moving the members of the `group` the `toggle` trigger completely enables or disables the members of the `group`, effectivly removing them from the level.
+`Toggle` triggers can be triggered in the same way as `move` triggers and also target a `group`, but instead of moving the members of the `group` the `toggle` trigger completely enables or disables the members of the `group`, effectively removing them from the level.
 
 ### Collision triggers
 `Collision` triggers are used in tandem with `collision blocks`. Each `collision block` can assign themselves a `block id`. A `collision` trigger is assigned two `block ids` to look out for and if any two `collision blocks` collide *and* they have the `blocks ids` specified in the `collision` trigger the `collision` trigger will trigger.
@@ -99,7 +99,7 @@ The mechanics used to make this alter what flag is shown in the end is not relev
 ### Checking
 This is the part that will need some reversing to be done. We will come back to it, but let's quickly cover the layout of it.
 
-In the beginning of the section there is a vertical tower of `collision blocks` with the `block id` set to `2`, shown as just the digit `2` here. This goes up way past the upper edge of the level editor, so we can't really get a good look at all of them. The whole tower is made to follow the player once the player has past it so the `collision blocks` will slowly scroll across the map together with the player.
+In the beginning of the section there is a vertical tower of `collision blocks` with the `block id` set to `2`, shown as just the digit `2` here. This goes up way past the upper edge of the level editor, so we can't really get a good look at all of them. The whole tower is made to follow the player once the player has passed it so the `collision blocks` will slowly scroll across the map together with the player.
 
 Around the ground level are `move` triggers that are either just below or just above the ground. The ones below will not get triggered when the player runs over them, but ones above will. They trigger groups `266-644`. Note that they are all part of the `group 5`, this will be important later.
 
