@@ -14,7 +14,7 @@ Note: Wrap the flag with idek{}
 ```
 
 ## Overview
-We are given nothing but this challenge description, containing the level ID for a Geomtry Dash level. Geomtry Dash is a 2D musical plattformer which I so happened to already have installed, so I took a quick look at the level. This was the title and description.
+We are given nothing but this challenge description, containing the level ID for a Geometry Dash level. Geometry Dash is a 2D musical plattformer which I so happened to already have installed, so I took a quick look at the level. This was the title and description.
 
 ![Description](description.png)
 
@@ -22,17 +22,17 @@ And, when played, we are presented with this.
 
 ![Start](start.gif)
 
-Well this certainly looks like a flag input, and a long one at that. Counting the bits shows that the whole input contains 256 bits, or 32 chars. Following the input bits is a long stretch oof the level when the player has no control and some patterns flash and move around the screen.
+Well this certainly looks like a flag input, and a long one at that. Counting the bits shows that the whole input contains 256 bits, or 32 chars. Following the input bits is a long stretch of the level when the player has no control and some patterns flash and move around the screen.
 
 ![Check](check.gif)
 
-Lastly we hit a huge wall of spikes and we can get a glimpse of the flag we presumably inputed.
+Lastly we hit a huge wall of spikes and we can get a glimpse of the flag we presumably input.
 
 ![Fail](fail.gif)
 
 Since the description says we will get the flag by beating the level, we can assume that whetever input causes us to  not run into the spike wall will also display a readable flag at the end.
 
-I knew for sure that I would not want to be manually inputing bits into this level, it simply moves too fast and there are too many bits.
+I knew for sure that I would not want to be manually inputting bits into this level, it simply moves too fast and there are too many bits.
 
 Using a discord bot I was able to get the passcode needed to copy the level (`671905`) and open it in the in-game editor. I also wanted to parse the level into Python so I looked for resources about how the level file format works but ended up needing to read the source code of some parsing libraries.
 
@@ -64,7 +64,7 @@ else:
     exit()
 ```
 
-The level format used for Geomtry Dash is very minimalistic. A world is simply a list of objects, separated by semicolons, and each object is a dictionary with numeric keys corresponding to certain properties of objects, separated by commas. The type of object (i.e spike, wall, etc.) is key `1` and the X and Y position are in `2` and `3`.
+The level format used for Geometry Dash is very minimalistic. A world is simply a list of objects, separated by semicolons, and each object is a dictionary with numeric keys corresponding to certain properties of objects, separated by commas. The type of object (i.e spike, wall, etc.) is key `1` and the X and Y position are in `2` and `3`.
 
 For example: the object id for a spike is `8` (I used [this](https://github.com/Rekkonnect/GDAPI/tree/master/GDAPI/GDAPI/Enumerations/GeometryDash) for reference), so if a spike sits at position `(13, 37)` then the object in the level-string would look like.
 ```
@@ -72,7 +72,7 @@ For example: the object id for a spike is `8` (I used [this](https://github.com/
 ```
 
 ## Triggers
-Triggers are what give Geomtry Dash levels their more advanced functionality, they are even possible to [compile a whole language into](https://github.com/Spu7Nix/SPWN-language). The important triggers used in this level are `move` triggers, `toggle` triggers and `collision` triggers. 
+Triggers are what give Geometry Dash levels their more advanced functionality, they are even possible to [compile a whole language into](https://github.com/Spu7Nix/SPWN-language). The important triggers used in this level are `move` triggers, `toggle` triggers and `collision` triggers. 
 
 ### Move triggers
 `Move` triggers move things<sup>[citation needed]</sup>. They can be triggered by the player passing by their x-position, the player touching them directly or by other triggers. They target a certain `group` and move everything in that `group` by an X and Y offset. Any object can be assigned as a member of a `group` in the editor and are just named as numbers (`group 1`, `group 2` etc.).
@@ -92,7 +92,7 @@ The level consists of 3 main parts: the input, checking and flag.
 The input is fairly straight forward, and looks like this in the editor.
 ![Input](input.png)
 
-This goes on for 256 bits, as mentioned earlier. The purple dots are `move` triggers and are just far down enough for the player to be able to jump to activate them. The number on the `move` trigger corresponds to the `group` it will move and the black boxes beneth the `0's` are in their respective input's group. The `move` trigger will move their `group` one grid block up, causing the black box above to move and conceal the `0` and reveal a `1`, marking the bit as set. The important thing to rember from this is just that the input arrives through the motion or non-motion of groups `9-264`.
+This goes on for 256 bits, as mentioned earlier. The purple dots are `move` triggers and are just far down enough for the player to be able to jump to activate them. The number on the `move` trigger corresponds to the `group` it will move and the black boxes beneath the `0's` are in their respective input's group. The `move` trigger will move their `group` one grid block up, causing the black box above to move and conceal the `0` and reveal a `1`, marking the bit as set. The important thing to remember from this is just that the input arrives through the motion or non-motion of groups `9-264`.
 
 The mechanics used to make this alter what flag is shown in the end is not relevant.
 
@@ -192,7 +192,7 @@ This is the result.
 
 ![](plot.png)
 
-I will now be refering to `collision blocks` with `block ids` of `2` as `twos` and a `block ids` of `1` as `ones`. I have drawn an additional line here indicating the 256th `two` in the Tower of Twos™. This is the last `two` that is directly dependant on the input we entered. Along the floor we can see the mess of `move` triggers but in the air we can clearly see all the scattered `ones` and one single `three` up in the right corner. Note that the Tower of Twos™ keep assigning each `two` to a higher group than the last one, with the last one being in `group 644`.
+I will now be referring to `collision blocks` with `block ids` of `2` as `twos` and a `block ids` of `1` as `ones`. I have drawn an additional line here indicating the 256th `two` in the Tower of Twos™. This is the last `two` that is directly dependent on the input we entered. Along the floor we can see the mess of `move` triggers but in the air we can clearly see all the scattered `ones` and one single `three` up in the right corner. Note that the Tower of Twos™ keep assigning each `two` to a higher group than the last one, with the last one being in `group 644`.
 
 Remember from earlier that the `move` triggers on the floor from the checking-part target groups `266-644`, and that the user input affects groups `9-264` (`group 265` is unaccounted for, doesnt matter). This means the first part of the Tower of Twos™ is affected by the user input directly, and the second part (above the gray line) is affected by the `move` triggers on the floor in the checking stage. Either way each `two` has a corresponding `move` trigger pointing to it.
 
