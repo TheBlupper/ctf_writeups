@@ -337,7 +337,7 @@ Vi kan nu se att hashen av ett block egentligen är en 256-dimensionell vektor i
 x_{0}\begin{bmatrix}0\\1\\\vdots\\1\end{bmatrix}+x_{1}\begin{bmatrix}1\\1\\\vdots\\0\end{bmatrix}+\ldots+x_{255}\begin{bmatrix}1\\0\\\vdots\\1\end{bmatrix}=n
 ```
 
-Där varje x är 1 eller 0 vilket säger om vi ska inkludera hashen från block nr. $n$ eller inte. Vi kan stoppa in det här som kolumner i en matris och lösa det med hjälp av https://pypi.org/project/galois/, vilket förlänger numpy's matrisfunktioner till galois fält.
+Där varje $x_{n}$ är 1 eller 0 vilket säger om vi ska inkludera hashen från block nr. $n$ eller inte. Vi kan stoppa in det här som kolumner i en matris och lösa det med hjälp av https://pypi.org/project/galois/, vilket förlänger numpy's matrisfunktioner till galois fält.
 
 Att hitta 256 linjärt oberoende vektorer kan vi göra genom att bara slumpa fram och checka, det är väldigt osannolikt att två slumpmässiga 256-dimensionella vektorer ligger på samma linje, men om det händer kör vi bara slumpningen igen. Ranken av en matris (vilket är det som checkes i koden) är samma sak som antalet linjärt oberoende kolumner den består av.
 
