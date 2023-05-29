@@ -59,7 +59,7 @@ function init_guess() {
 }
 ```
 
-Jo, som kan ses, används JavaScripts inbygga funktion `Math.random()` för att generera varje tal. Internt använder det algoritmen `xorshift128+` som, medan den är elegant i sin enkelhet, har en hel del brister. Dessa brister gör det möjligt att efter tillräckligt många anrop kunna förutse framtida nummer, vilket såklart skulle hjälpa i det här fallet.
+Jo, som kan ses, används JavaScripts inbyggda funktion `Math.random()` för att generera varje tal. Internt använder den algoritmen `xorshift128+` som, medan den är elegant i sin enkelhet, har en hel del brister. Dessa brister gör det möjligt att efter tillräckligt många anrop kunna förutse framtida nummer, vilket såklart skulle hjälpa i det här fallet.
 
 Den enda informationen vi kan extrahera om de värden `Math.random()` genererar är om de är större eller mindre än ett godtyckligt flyttal vi anger. Låt oss se hur `Math.random()` fungerar internt för att kanske se hur den lilla informationen kan hjälpa oss.
 
@@ -131,7 +131,7 @@ SWAP = np.roll(GF2.Identity(128), 64, axis=1)
 ```
 
 ### XOR
-Resten av operationerna är någon form av XOR på `s1`, med en shift åt vänster, höger eller ingenting. Låt oss göra en generell funktion som låter oss göra en matris som XOR:ar två områden i statet och spara resultatet i det ena av dem.
+Resten av operationerna är någon form av XOR på `s1`, med en shift åt vänster, höger eller ingenting. Låt oss göra en generell funktion som låter oss göra en matris som XOR:ar två områden i statet och spara resultatet i den ena av dem.
 
 ```py
 def xor(dst, src, size):
