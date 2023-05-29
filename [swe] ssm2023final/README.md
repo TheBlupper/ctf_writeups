@@ -212,8 +212,8 @@ Vi vill helst klämma ihop det här till ett uttryck. För att göra det kan vi 
 ```py
 def extract(i):
     # extracts only the 64th bit and puts it in the ith position
-    A = GF2(np.zeros((128,128), dtype=int))
-    A[i,63] = 1
+    A = GF2.Zeros((128, 128))
+    A[i, 63] = 1
     return A
 ```
 
