@@ -196,8 +196,14 @@ Det betyder att om vi skickar in talet `0.5` till servern och den säger att den
 
 ```math
 (A^0s_0)_{63} = p_0\\
+```
+```math
 (A^1s_0)_{63} = p_1\\
+```
+```math
 \vdots\\
+```
+```math
 (A^{127}s_0)_{63} = p_{127}\\
 ```
 
