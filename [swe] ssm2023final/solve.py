@@ -46,8 +46,8 @@ def xor_s1_s1(shift):
 
 
 print('[*] Samlar datapunkter...')
-#io = process('./service.js')
-io = remote('35.217.53.195', 50000, ssl=True)
+io = process('./service.js')
+#io = remote('35.217.53.195', 50000, ssl=True)
 
 points = []
 for i in tqdm(range(128)):
@@ -68,7 +68,7 @@ Construct a matrix that is equivalent to:
 '''
 
 SWAP = np.roll(GF2.Identity(128), 64, axis=1)
-XS128P = xor_s1_s0(26)@xor_s1_s0(0)@xor_s1_s1(17)@xor_s1_s1(-23)@SWAP
+XS128 = xor_s1_s0(26)@xor_s1_s0(0)@xor_s1_s1(17)@xor_s1_s1(-23)@SWAP
 
 
 def extract(i):
@@ -82,11 +82,11 @@ A = GF2.Zeros((128, 128))
 MAT_POW = GF2.Identity(128)
 for i in range(128):
     A += extract(i)@MAT_POW
-    MAT_POW = XS128P @ MAT_POW
+    MAT_POW = XS128 @ MAT_POW
 
 original_state = np.linalg.solve(A, points)
 # We add 63 since it will have just filled a new bucket
-next_state = np.linalg.matrix_power(XS128P, 128+63)@original_state
+next_state = np.linalg.matrix_power(XS128, 128+63)@original_state
 s0 = next_state[:64]
 io.sendlineafter(b'[J/n]', b'j')
 

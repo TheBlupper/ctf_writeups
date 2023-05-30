@@ -1,9 +1,8 @@
 #!/usr/bin/node
-const fs = require('fs');
 const readline = require('readline');
 const process = require('process');
 
-const FLAG = fs.readFileSync('./flag.txt', 'utf8');
+const FLAG = "SSM{fake_flag}"
 
 // var NUMBERS = [];
 // for (var i = 0; i < 1000; i++) {

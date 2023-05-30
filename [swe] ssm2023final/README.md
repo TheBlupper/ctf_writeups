@@ -59,7 +59,7 @@ function init_guess() {
 }
 ```
 
-Jo, som kan ses, används JavaScripts inbyggda funktion `Math.random()` för att generera varje tal. Internt använder den algoritmen `xorshift128+` som, medan den är elegant i sin enkelhet, har en hel del brister. Dessa brister gör det möjligt att efter tillräckligt många anrop kunna förutse framtida nummer, vilket såklart skulle hjälpa i det här fallet.
+Jo, som kan ses, används JavaScripts inbyggda funktion `Math.random()` för att generera varje tal. Internt använder den algoritmen `xorshift128` som, medan den är elegant i sin enkelhet, har en hel del brister. Dessa brister gör det möjligt att efter tillräckligt många anrop kunna förutse framtida nummer, vilket såklart skulle hjälpa i det här fallet.
 
 Den enda informationen vi kan extrahera om de värden `Math.random()` genererar är om de är större eller mindre än ett godtyckligt flyttal vi anger. Låt oss se hur `Math.random()` fungerar internt för att kanske se hur den lilla informationen kan hjälpa oss.
 
@@ -95,14 +95,14 @@ Det är inte jätterelevant för matten bakom det hela, vi kommer bara behöva t
 
 ### Svagheten
 
-Det som gör `xorshift128+` till en tämligen kass RNG för kryptografiska och säkerhetsrelaterade sammanhang är att den är så kallat linjär. Jag kommer inte motivera varför den är det just nu, men vad det betyder är att det är möjligt att representera de operationer den gör med hjälp av en matris, och matriser vet vi hur man gör matte med.
+Det som gör `xorshift128` till en tämligen kass RNG för kryptografiska och säkerhetsrelaterade sammanhang är att den är så kallat linjär. Jag kommer inte motivera varför den är det just nu, men vad det betyder är att det är möjligt att representera de operationer den gör med hjälp av en matris, och matriser vet vi hur man gör matte med.
 
 Vi kommer nu bara anta att den är linjär, om den inte skulle vara det kommer vi inte kunna representera de operationer vi vill och vi skulle i sådana fall märka det.
 
-Så, hur kan vi göra om följden operationer `xorshift128+` utför till en matris? Låt oss jobba steg för steg. Här är den simplifierade algoritmen, i Python för pedagogins sak.
+Så, hur kan vi göra om följden operationer `xorshift128` utför till en matris? Låt oss jobba steg för steg. Här är den simplifierade algoritmen, i Python för pedagogins sak.
 ```py
 MASK = 2**64-1
-def xs128p(s0, s1):
+def xs128(s0, s1):
     s0, s1 = s1, s0
     s1 ^= (s1 << 23) & MASK
     s1 ^= s1 >> 17
@@ -168,7 +168,7 @@ def xor_s1_s1(shift):
 Nu har vi allt vi behöver för att konstruera en matris som representerar hela funktionen. Kom bara ihåg att matrismultiplikation jobbar "baklänges", så den operation vi vill utföra först hamnar sist i kedjan.
 
 ```py
-XS128P = xor_s1_s0(26)@xor_s1_s0(0)@xor_s1_s1(17)@xor_s1_s1(-23)@SWAP
+XS128 = xor_s1_s0(26)@xor_s1_s0(0)@xor_s1_s1(17)@xor_s1_s1(-23)@SWAP
 ```
 
 Vilket ger oss vår kompletta matris.
@@ -192,7 +192,7 @@ Det betyder att om vi skickar in talet `0.5` till servern och den säger att den
 
 ### Lösning
 
-Återkalla att det är sista biten av `s0` vi läcker, och `s0` ligger först i staten. Den läckta biten är alltså `state[63]`. Låt oss kalla statet i början av programmet för $s_0$ och listan av alla läkta bits för $p$. Då ser vår informationsläcka ut som följer, där `A` är matrisen för `xorshift128+`.
+Återkalla att det är sista biten av `s0` vi läcker, och `s0` ligger först i staten. Den läckta biten är alltså `state[63]`. Låt oss kalla statet i början av programmet för $s_0$ och listan av alla läkta bits för $p$. Då ser vår informationsläcka ut som följer, där `A` är matrisen för `xorshift128`.
 
 ```math
 (A^0s_0)_{63} = p_0\\
@@ -312,7 +312,7 @@ Construct a matrix that is equivalent to:
 '''
 
 SWAP = np.roll(GF2.Identity(128), 64, axis=1)
-XS128P = xor_s1_s0(26)@xor_s1_s0(0)@xor_s1_s1(17)@xor_s1_s1(-23)@SWAP
+XS128 = xor_s1_s0(26)@xor_s1_s0(0)@xor_s1_s1(17)@xor_s1_s1(-23)@SWAP
 
 
 def extract(i):
@@ -326,11 +326,11 @@ A = GF2.Zeros((128, 128))
 MAT_POW = GF2.Identity(128)
 for i in range(128):
     A += extract(i)@MAT_POW
-    MAT_POW = XS128P @ MAT_POW
+    MAT_POW = XS128 @ MAT_POW
 
 original_state = np.linalg.solve(A, points)
 # We add 63 since it will have just filled a new bucket
-next_state = np.linalg.matrix_power(XS128P, 128+63)@original_state
+next_state = np.linalg.matrix_power(XS128, 128+63)@original_state
 s0 = next_state[:64]
 io.sendlineafter(b'[J/n]', b'j')
 
