@@ -57,20 +57,20 @@ Each loop iteration will first execute the following block:
 
 If we consider `B` to be a row-major `16x16` matrix, this corresponds to putting our characters in the first column. However, before that each character has `33` subtracted from it and the result is passed into `rc()`  with `3` as the second argument. I.e:
 
-$$$
+$$
 B = \begin{bmatrix}
 rc(c_0-33,\ 3) & 0 & \dots & 0 \\
 rc(c_1-33,\ 3) & 0 & \dots & 0 \\ 
 \vdots & \vdots & \ddots & 0 \\
 rc(c_{15}-33,\ 3) & 0 & 0 & 0
 \end{bmatrix}
-$$$
+$$
 
 Lastly this matrix `B` is passed into `matmult_SSE4` together with a constant matrix `A`, with the output supposedly being saved to `C`. We'd better check that this matmult function actually does what it says.
 
 If we set a breakpoint before it's called we can extract the two matrices, and if we then run until it finishes we can extract the result. With `aaaaaaaaaaaaaaaa` as the input block `A`, looks like this:
 
-$
+$$
 \begin{bmatrix}
 55 & 81 & 66 & 68 & 86 & 67 & 51 & 34 & 88 & 43 & 44 & 70 & 65 & 51 & 93 & 54\\
 73 & 45 & 54 & 35 & 82 & 59 & 67 & 84 & 87 & 46 & 69 & 46 & 46 & 80 & 79 & 51\\
@@ -89,11 +89,11 @@ $
 37 & 78 & 75 & 90 & 78 & 49 & 76 & 79 & 68 & 82 & 76 & 87 & 82 & 73 & 52 & 46\\
 93 & 36 & 34 & 41 & 94 & 55 & 42 & 58 & 54 & 37 & 40 & 76 & 90 & 95 & 40 & 75\\
 \end{bmatrix}
-$
+$$
 
 And `B` looks like this
 
-$
+$$
 \begin{bmatrix}
 64 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
 64 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
@@ -112,11 +112,11 @@ $
 64 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
 64 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
 \end{bmatrix}
-$
+$$
 
 So we would expect `C` (`A*B`) to then equal:
 
-$
+$$
 \begin{bmatrix}
 65024 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
 64192 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
@@ -135,11 +135,11 @@ $
 72192 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
 61440 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
 \end{bmatrix}
-$
+$$
 
 But instead what we get is this:
 
-$
+$$
 \begin{bmatrix}
 65024 & 65024 & 65024 & 65024 & 65024 & 65024 & 65024 & 65024 & 64448 & 64448 & 64448 & 64448 & 64448 & 64448 & 64448 & 64448\\
 64192 & 64192 & 64192 & 64192 & 64192 & 64192 & 64192 & 64192 & 59456 & 59456 & 59456 & 59456 & 59456 & 59456 & 59456 & 59456\\
@@ -158,7 +158,7 @@ $
 72192 & 72192 & 72192 & 72192 & 72192 & 72192 & 72192 & 72192 & 65216 & 65216 & 65216 & 65216 & 65216 & 65216 & 65216 & 65216\\
 61440 & 61440 & 61440 & 61440 & 61440 & 61440 & 61440 & 61440 & 32448 & 32448 & 32448 & 32448 & 32448 & 32448 & 32448 & 32448\\
 \end{bmatrix}
-$
+$$
 
 It is clearly not normal matrix multiplication. As it turns out this doesn't matter in the end because only the first column of the resultant matrix is used, which is the same in both the expected and actual output. During the competition however we didn't have the full picture yet so we decided to try and understand what it is that's actually happening under the hood, and who knows, maybe we'll learn something along the way.
 
