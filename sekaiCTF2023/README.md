@@ -68,7 +68,7 @@ $$
 
 Lastly this matrix `B` is passed into `matmult_SSE4` together with a constant matrix `A`, with the output supposedly being saved to `C`. We'd better check that this matmult function actually does what it says.
 
-If we set a breakpoint before it's called we can extract the two matrices, and if we then run until it finishes we can extract the result. With `aaaaaaaaaaaaaaaa` as the input block `A`, looks like this:
+If we set a breakpoint before it's called we can extract the two matrices, and if we then run until it finishes we can extract the result. With `aaaaaaaaaaaaaaaa` as the input block, `A` looks like this:
 
 $$
 \begin{bmatrix}
@@ -114,7 +114,7 @@ $$
 \end{bmatrix}
 $$
 
-So we would expect `C` (`A*B`) to then equal:
+So one would expect `C` (`A*B`) to then equal:
 
 $$
 \begin{bmatrix}
@@ -210,7 +210,7 @@ def matmult(A, B):
     return C
 ```
 
-Here `A[i]*B` is a vector times a matrix, resulting in another vector. This can also be called a linear combination and is what I suspect is happening in `lincomb_SSE`.
+Here `A[i]*B` denotes a vector times a matrix, resulting in another vector. This is sometimes called a linear combination and is what I suspect is happening in `lincomb_SSE`.
 
 But then why is the outer loop running `32` times? And we are indexing `A` by `8*i`, essentially pulling out each row as if it were a `8x32` matrix? Something just ain't right.
 
