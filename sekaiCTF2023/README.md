@@ -57,14 +57,14 @@ Each loop iteration will first execute the following block:
 
 If we consider `B` to be a row-major `16x16` matrix, this corresponds to putting our characters in the first column. However, before that each character has `33` subtracted from it and the result is passed into `rc()`  with `3` as the second argument. I.e:
 
-$
+$$$
 B = \begin{bmatrix}
 rc(c_0-33,\ 3) & 0 & \dots & 0 \\
 rc(c_1-33,\ 3) & 0 & \dots & 0 \\ 
 \vdots & \vdots & \ddots & 0 \\
 rc(c_{15}-33,\ 3) & 0 & 0 & 0
 \end{bmatrix}
-$
+$$$
 
 Lastly this matrix `B` is passed into `matmult_SSE4` together with a constant matrix `A`, with the output supposedly being saved to `C`. We'd better check that this matmult function actually does what it says.
 
