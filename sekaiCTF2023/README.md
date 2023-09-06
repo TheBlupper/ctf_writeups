@@ -1,8 +1,12 @@
+### Prelude
+
+This is a challenge which relies on the AVX-512 instruction set and other vector instructions to obfuscate a program. To aid in our reversing efforts we construct a Binary Ninja plugin which allows us to lift any unimplemented instructions to Binja's low level IL, allowing us to analyze the program utilizing the full decompiler toolset Binja offers.
+
 ## [rev] Sahuang Flag Checker
 
 **Author:** Iy3dMejri
 
-**Beskrivning:**
+**Description:**
 ```
 Can you figure out what master sahuang flag checker is doing to satisfy the 🐸?
 
@@ -35,27 +39,29 @@ Well, it looks like shit.
 
 ![](./bad_main.png)
 
-Binary Ninja seems to have seriously messed up the stack. If we look at the disassembly we can find a likely culprit.
+Right of the bat we see that Binary Ninja seems to have serious trouble with the stack. If we look at the disassembly we can find a likely culprit.
 
 ![](./and_rsp.png)
 
-This is quite common to see in programs dealing with advanced vector instructions, since many of them need their addresses (which may come from the stack) to be aligned to some degree. Binja sadly gets confused by this and completely looses track of the stack structure, but we can help it by simply `nop`-ing out the offending instruction; it should not affect the program flow. We now get this, much nicer, decompilation. (I've gone ahead and annotated some variables already)
+This zeros out the last 6 bits of the stack pointer to ensure it's aligned to a 64-byte boundary. This is quite common to see in programs dealing with advanced vector instructions, since many of them need their addresses (which may come from the stack) to be aligned to some degree. Binja sadly gets confused by this and completely looses track of the stack structure, but we can help it by simply `nop`-ing out the offending instruction, which shouldn't be relevant to our analysis.
+
+We now get this much more readable decompilation. (I've gone ahead and annotated some variables already)
 
 ![](./better_main.png)
 
-As we can see it reads in at most `60` characters from `stdin` and then pads them with the char `'X'` until it is a multiple of `16` long.
+As we can see it reads in at most `60` characters from `stdin` and then pads them with the char `'X'` until it its length is a a multiple of `16`.
 
-It then enters an outer loop which increments `off` by `16` every time until it is greater or equal to the input length, essentially looping over every "block" of size `16` characters in our input.
+It then enters an outer loop which increments `off` by `16` every time until it is greater or equal to the input length, essentially looping over every block of `16` characters in our input.
 
 ### First step
 
-Each loop iteration will first execute the following block:
+Each iteration of the loop will first execute the following block of code:
 
 ![](./first_step.png)
 
-`B_ptr` here is a pointer into an array of `double`s (`B`) of length `256`. We see some ugly intrinsics that Binja wasn't able to lift, but the gist is that each of our first `16` characters are placed into every `16`th slot in `B`, after being converted from an integer to a double, i.e `88` -> `88.0`.
+`B_ptr` here is a pointer into a `256` long array of `double`s (`B`). We see some ugly intrinsics that Binja wasn't able to lift, but the gist is that each of our first `16` characters are placed into every `16`th slot in `B`, after first being transformed by `rc(ch-33, 3)` and then converted from an integer to a double, i.e `88` -> `88.0`.
 
-If we consider `B` to be a row-major `16x16` matrix, this corresponds to putting our characters in the first column. However, before that each character has `33` subtracted from it and the result is passed into `rc()`  with `3` as the second argument. I.e:
+If we consider `B` to be a row-major `16x16` matrix, this corresponds to putting our transformed characters in the first column.
 
 $$
 B = \begin{bmatrix}
@@ -160,7 +166,7 @@ $$
 \end{bmatrix}
 $$
 
-It is clearly not normal matrix multiplication. As it turns out this doesn't matter in the end because only the first column of the resultant matrix is used, which is the same in both the expected and actual output. During the competition however we didn't have the full picture yet so we decided to try and understand what it is that's actually happening under the hood, and who knows, maybe we'll learn something along the way.
+It is clearly not normal matrix multiplication. As it turns out this doesn't actually matter in the end because only the first column of the resultant matrix is used, which happends to match the correct matrix multiplication. During the competition, however, we didn't have the full picture yet so we decided to try and understand what it is that's actually happening under the hood, and who knows, maybe we'll learn something along the way.
 
 ### Understanding matmult_SSE4
 
@@ -168,7 +174,7 @@ We are once again greeted with a thoroughly messed up decompilation.
 
 ![](./matmult1.png)
 
-The stack alignment seems to once again be the problem. We could just manually patch the `and rsp, ...` out, but I have a feeling that we'll want to do this a lot, and maybe some other modifications as well, so let's write a Binary Ninja plugin to do this instead.
+Once again the stack alignment seems to be the culprit. We could just manually patch the `and rsp, ...` out, but I have a feeling that we'll want to do this a lot, and maybe some other modifications as well, so let's write a Binary Ninja plugin to automate this for us.
 
 ```py
 from binaryninja import *
@@ -194,13 +200,13 @@ class Patch(ArchitectureHook):
 Patch(x86_64).register()
 ```
 
-Using `capstone` here instead of Binja's builtin disassembler might seem excessive and expensive, but this does have its reasons which I'll get to shortly.
+Using `capstone` here instead of Binja's builtin disassembler might seem overkill at first, but this choice foreshadows some reasons which I'll get to shortly.
 
 Now we have something a lot more readable, but still littered with annoying intrinsics.
 
 ![](matmult2.png)
 
-Ignoring the specifics for now, we can already see that there's some weird stuff going on. `A`, `B` and `C` are all `16x16` matrices. A common way to compute matrix products efficiently is something along these lines:
+Ignoring the specifics for now, we can already see that there's some weird stuff going on. `A`, `B` and `C` are all `16x16` matrices. A common way to compute matrix products is something along these lines:
 
 ```py
 def matmult(A, B):
@@ -241,9 +247,9 @@ Let's now compare this to what `objdump` thinks is happening.
     17d7:       62 f2 fd 48 19 44 24    vbroadcastsd zmm0,QWORD PTR [rsp-0x50]
 ```
 
-It's now reading from `[rsp-0x50]`? This is the output we also get from several other different disassemblers, Binary Ninjas disassembler is simply wrong. This is why I chose to use `capstone` for the patching plugin up above. We can now use it to also patch these incorrect instructions to the correct ones!
+It's now reading from `[rsp-0x50]`? This is the output we also get from several other different disassemblers, Binary Ninjas disassembler is simply wrong. This is why I chose to use `capstone` earlier for the patching plugin. We can now use it to also patch these incorrect instructions to the correct ones!
 
-I will preface by saying that these patches are made specifically for this binary and to aid reversing efforts, it may be completely incorrect in some cases. 
+I should preface by saying that these patches are made specifically for this binary, it may be completely incorrect in some cases. 
 
 First we define this incredible ugly function to convert a `capstone` instruction operand to Binary Ninja's low level IL.
 
@@ -289,7 +295,7 @@ We also have cases like these:
 
 ![](./mask_store.png)
 
-This works exactly like a normal store, `k0` is used as a mask but it is always zero so we can ignore it. To make things more readable we can therefore turn this into a normal store. Let's also add `xor` while we're at it.
+This works exactly like a regular store, with the added detail that `k0` is used as a mask. Though in our program it's always zero, so to make things more readable we can turn this into a regular store. Let's also add `xor` while we're at it.
 
 ```py
 if instr.mnemonic in ['vmovsd', 'vmovapd', 'vmovss', 'vmovdqa']:
@@ -322,7 +328,7 @@ We now get:
 
 Wow, what a difference huh? The remaining intrinsics are a little bit more annoying to lift. `_mm512_extload_pd` is a broadcast operation which takes a `double` (8 bytes) and places 8 copies of it next to eachother in the target register. Lifting this would arguably just make things less readable.
 
-`__vaddpd_...` and `__vmulpd_...` are pairwise operations, treating their input as two arrays and multiplying corresponding elements with eachother. We can leave it as-is with a slightly clobbered decompilation, or we can be a little naughty tell Binja a white lie, namely that it's actually just normal addition/multiplication, and we can just remember that we are treating them as arrays.
+`__vaddpd_...` and `__vmulpd_...` are pairwise operations, treating their input as two arrays and multiplying corresponding elements with eachother. We could leave this too as-is with a slightly more verbose decompilation, or we can be a little naughty tell Binja a white lie. Namely that it's actually just normal addition/multiplication, and we'll keep a mental note that we're treating them as array operations.
 
 ```py
 # WARNING: very bad and naughty, but it looks so good decompiled ;-;
@@ -390,7 +396,7 @@ We now get this:
 
 ![](./rc2.png)
 
-Which we can easily translate to:
+Which just rotates the lower 4 bits of `a` left by `b` bits. Written as some bitwise pseudocode: `a[8:4] || ROL4(a[4:0], b & 0xf)`, or as regular python:
 
 ```py
 def rc(a, b):
@@ -399,7 +405,7 @@ def rc(a, b):
 
 ### Second step
 
-We can now finally move on to the second step. It looks like this.
+We can now finally move on to the second step of the outermost loop, which looks like this.
 
 ![](./second1.png)
 
@@ -427,6 +433,8 @@ We now have this.
 
 ![](./second2.png)
 
+`add`, `sub`, and `mul` actually do what their name would suggest in this case. They are equally littered with unnecessary vector operations as what we've looked at before, so I'll spare you the details and hope you'll take my word for it. 
+
 I'm not sure why, but `0x42bc0000` didn't get translated to a floating point value in this decompilation. If it were you would see that it was `94.0`. Furthermore, `0.0106382975` is actually just `1/94.0`. Using this we can produce this equivalent code:
 
 ```py
@@ -435,7 +443,7 @@ for i in range(16):
     out[i] = (C[i][0] - (C[i][0] // 94) * 94) + 33
 ```
 
-Which is also equivlent to:
+Which is actually just an optimized way to write modulo:
 
 ```py
 for i in range(16):
@@ -448,7 +456,7 @@ for i in range(16):
 
 ### The full algorithm
 
-Let's now take a step back after digging in the weeds and consider the final algorithm. I've turned the janky matrix multiplication used in the program to a normal one since we are only accessing the first column after it is computed, and the first column is actually correct.
+Let's now take a step back after digging in the weeds and consider the final algorithm from start to finish. I've turned the janky matrix multiplication used in the program to a normal one since we are only accessing the first column after it is computed, and the first column is actually correct.
 
 ```py
 def rc(a, b):
@@ -466,7 +474,7 @@ for i in range(3):
     assert targets[i] == [(C[j][0]%94)+33 for j in range(16)]
 ```
 
-Inverting `rc()` is as simple as putting `1` as the second argument instead of `3`, verifying how this works is left as an exercise to the reader. Addition/subtraction with `33` is of course also easily invertible, so we are left with the matrix multiplication modulo `94`. 
+The inverse of `rc(a, b)` is just `rc(a, 4 - b)`, so we can simply replace `3` with `1` as the second argument. Addition/subtraction with `33` is of course also easily invertible, so we are left with the matrix multiplication modulo `94`.
 
 Solving a matrix equation over a finite ring is not something we want to do ourselves (especially not with a composite modulus) so we instead hand that problem over to [Sage](https://www.sagemath.org/).
 
@@ -508,7 +516,7 @@ with open(Path(bv.file.filename).parent/'extracted.json', 'w') as f:
     json.dump(out, f)
 ```
 
-Now we can hand this to Sage and watch as the flag pops out.
+Now we can hand this over to Sage and watch as the flag pops out.
 
 ```py
 import json
@@ -533,6 +541,6 @@ for target in targets:
 
 In the end it really wasn't a complicated algoritm, but the tooling for decompiling these kinds of programs in a nice and readable way just doesn't seem to exist.
 
-You might've gotten a bad impression of Binary Ninja's capabilities when it comes to modern vector instructions, but the truth is that all decompilers I could find struggled just as much if not more. IDA refuses to even decompile the offending instructions and leaves it as inline assembly, which is obviously cheating, and Ghidra fails to even disassemble the instructions and halts because of bad data.
+You might've gotten a bad impression of Binary Ninja's capabilities when it comes to modern vector instructions, but the truth is that all big decompilers struggled just as much if not more. IDA refuses to even decompile the offending instructions and leaves it as inline assembly, which is obviously cheating, and Ghidra fails to even disassemble the instructions, leaving us with a sad `halt_baddata();`.
 
 Binary Ninja lifted it to intrinsics and because of it's extensive API I was able to modify it to fit my needs (although I'm still a bit grumpy about the incorrect disassembly).
