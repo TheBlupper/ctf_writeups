@@ -21,7 +21,7 @@ Let's look at how `elliptic_hash` is structured. Two different elliptic curves a
 
  - If a given $x$-coordinate does *not* correspond to a point on $E$ then it will correspond to a point on $T$, and vice versa.
 
-When the program is initialized two random integers $0<k_1<|E|$ and $0<k_2<|T|$ are generated. These are then multiplied by the corresponding generator point of each curve to yield two new points $P_E = k_1 G_E$ and $P_T = k_2 G_T$ (`Pu` and `PTu` in the source code). We are shown $k_1$ and $k_2$ and can hence calculate both points ourselves.
+When the program is initialized two random integers $0 < k_1 < |E|$ and $0 < k_2 < |T|$ are generated. These are then multiplied by the corresponding generator point of each curve to yield two new points $P_E = k_1 G_E$ and $P_T = k_2 G_T$ (`Pu` and `PTu` in the source code). We are shown $k_1$ and $k_2$ and can hence calculate both points ourselves.
 
 The message is first divided up into blocks of 20 bytes, which corresponds to the size of the $x$-coordinate of a point on the curve. When referring to blocks from now on we are interested in their integer representation.
 
